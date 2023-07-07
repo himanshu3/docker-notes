@@ -1,18 +1,18 @@
 # docker-notes
-Mis notas sobre Docker.
+Docker notes.
 
 # Table of Contents
-* **[Introducción](#introducción)**
+* **[Introduction](#introduction)**
   * **[What is Docker?](#what-is-docker)**
   * **[Docker Engine](#docker-engine)**
   * **[Docker Architecture](#docker-architecture)**
   * **[Docker Objects](#docker-objects)**
   * **[The underlying technology](#the-underlying-technology)**
-* **[Instalación](#instalación)**
+* **[Installation](#installation)**
 * **[Containers](#containers)**
   * **[Ports in Containers](#ports-in-containers)**
 * **[Images](#images)**
-  * **[Crear nuestras propias imágenes](#crear-nuestras-propias-images)**
+  * **[Create our own images](#creat-our-own-images)**
 * **[Volumes](#volumes)**
   * **[Choose the right type of mount](#choose-the-right-type-of-mount)**
     * **[Volumes](#volumes-1)**
@@ -21,20 +21,20 @@ Mis notas sobre Docker.
   * **[Good Use case for Volumes](#good-use-case-for-volumes)**
   * **[Good Use case for Bind Mounts](#good-use-case-for-bind-mounts)**
   * **[Good Use case for tmpfs Mounts](#good-use-case-for-tmpfs-mounts)**
-  * **[Ejemplo Práctico](#ejemplo-práctico)**
-* **[Ciclo de vida de un contenedor (Create/Start/Stop/Kill/Remove)](#ciclo-de-vida-de-un-contenedor-createstartstopkillremove)**
+  * **[Practical example](#practical-example)**
+* **[Container life cycle (Create/Start/Stop/Kill/Remove)](#container-life-cycle-createstartstopkillremove)**
 * **[Dockerfiles](#dockerfiles)**
-  * **[Cómo Empezar](#cómo-empezar)**
-  * **[La Aplicación](#la-aplicación)**
-  * **[Build del Dockerfile](#build-del-dockerfile)**
+  * **[How to start](#how-to-start)**
+  * **[The Application](#the-application)**
+  * **[Build the Dockerfile](#build-the-dockerfile)**
   * **[Run the App](#run-the-app)**
 * **[Docker Compose: Linkar Containers](#docker-compose-linkar-containers)**
 * **[Networking](#networking)**
   * **[Introduction](#introduction)**
   * **[Network Containers](#network-containers)**
-    * **[1. Crear nuestro propio "Bridge Network"](#1-crear-nuestro-propio-bridge-network)**
+    * **[1. Creat own "Bridge Network"](#1-creat-own-bridge-network)**
     * **[2. Add Containers to a Network](#2-add-containers-to-a-network)**
-* **[Limpieza](#limpieza)**
+* **[Cleaning](#cleaning)**
   * **[Containers](#containers-1)**
   * **[Images](#images-1)**
   * **[Volumes](#volumes)**
@@ -42,7 +42,7 @@ Mis notas sobre Docker.
   * **[Docker General Commands](#docker-general-commands)**
   * **[Dockerfile Commands](#dockerfile-commands)**
 
-# Introducción
+# Introduction
 
 ### What is Docker?
 
@@ -122,169 +122,170 @@ Union file systems, or **UnionFS**, are file systems that operate by **creating 
 
 Docker Engine combines the namespaces, control groups, and UnionFS into a wrapper called a **container format**. The default container format is **libcontainer**. In the future, Docker may support other container formats by integrating with technologies such as BSD Jails or Solaris Zones.
 
-# Instalación
+# Installation
 
-Cuando hablamos de "instalar docker" nos estamos refiriendo a instalar "Docker Engine". Para ello, lo haremos siguiendo los pasos indicados en la [Documentación Oficial](https://docs.docker.com/engine/installation/).
+When we talk about "installing docker" we are referring to installing "Docker Engine". To do this, we will do it following the steps indicated in the [Official Documentation](https://docs.docker.com/engine/installation/).
 
 # Containers
-A continuación se muestran los comandos más habituales con "containers":
+
+The following are the most common commands with "containers":
 
 ### `ps`
 
-Muestra los contenedores en ejecución (running).
+Shows running containers.
 
-* Ver containers arrancados:                         
+* See ripped containers: 
 ```shell
 $ docker ps
 ```
-* Ver "todo el historial" de containers arrancados:
+* View "all history" of booted containers:
 ```shell
 $ docker ps -a
 ```
 
-* Ver el "ID" (-q) del último (-l) container:
+* View the "ID" (-q) of the last (-l) container:
 ```shell
 $ docker ps -l -q
 ```
 
 ### `exec`
-Para acceder a la shell de un "container" que tuvieramos previamente arrancado:
+To access the shell of a "container" that we had previously started:
 
-Indicando su ID:
+Indicating your ID:
 ```shell
 $ sudo docker exec -i -t 665b4a1e17b6 /bin/bash
 ```
 
-o sino también a través de su nombre:
+o but also through his name:
 ```shell
 $ sudo docker exec -i -t loving_heisenberg /bin/bash
 ```
 
 ### `run`
-Crea y arranca un "container".
-Por defecto un contenedor se arranca, ejecuta el comando que le digamos y se para:
+Create and start a "container".
+By default, a container starts, executes the command that we tell it to, and stops.:
 ```shell
 $ docker run busybox echo hello world
 ```
 
-Por lo general `docker run` tiene la siguiente estructura:
+Usually `docker run` has the following structure:
 ```shell
 $ docker run -p <puerto_host>:<puerto_container> username/repository:tag
 ```
 
-Podemos pasarle varias opciones al comando `run`, como por ejemplo:
+We can pass various options to the `run` command, such as:
 
 * `run` **interactivo**:
 ```shell
 $ docker run -t -i ubuntu:16.04 /bin/bash
 ```
-  * **-h:** Le configuramos un hostname al "container".
-  * **-t:** Asigna una TTY.
-  * **-i:** Nos comunicamos con el "container" de manera interactiva.
+  * **-h:** configure a hostname to the "container".
+  * **-t:** Assign a TTY.
+  * **-i:** Communicate with the "container" interactively.
 
-  **Nota:** Al salir del modo interactivo (-i) el "container" se detendrá.
+  **Nota:** When exiting interactive mode (-i) the "container" will stop.
 
 * `run` **Detached Mode**:
 
-  Como ya sabemos, trás correr un contenedor de manera interactiva, este finaliza. Si se quieren hacer contenedores que corran servicios (por ejemplo, un servidor web) el comando es el siguiente:
+  As we already know, after running a container interactively, it ends. If you want to make containers that run services (for example, a web server) the command is the following:
   ```shell
   $ docker run -d -p 1234:1234 python:2.7 python -m SimpleHTTPServer 1234
   ```
-  * **Explicación:** Esto ejecuta un servidor **Python** (SimpleHTTPServer module), en el puerto **1234**.
-    * **-p 1234:1234** le indica a Docker que tiene que hacer un _port forwarding_ del contenedor hacia el puerto 1234 de la máquina host. Ahora podemos abrir un browser en la dirección http://localhost:1234.
+  * **Explanation:** This runs a server **Python** (SimpleHTTPServer module), on the port **1234**.
+    * **-p 1234:1234** tells Docker to _port forward_ the container to port 1234 on the host machine. Now we can open a browser at the address http://localhost:1234.
 
-    * **-d:** hace que el "container" corra en segundo plano. Esto nos permite ejecutar comandos sobre el mismo en cualquier momento mientras esté en ejecución. Por ejemplo:
+    * **-d:** makes the "container" run in the background. This allows us to execute commands on it at any time while it is running. For example:
     ```shell
     $ docker exec -ti <container-id> /bin/bash
     ```
 
-      * Aquí simplemente se abre una **tty** en modo **interativo**. Podrían hacerse otras cosas como cambiar el _working directory_, definir variables de entorno, etc.
+      * Here you simply open a **tty** in **interactive** mode. Other things could be done like changing the _working directory_, setting environment variables, etc.
 
 
 ### `inspect`
-Muestra detalles acerca de un contenedor:
+Display details about a container:
 
-* Info sobre un container:
+* Information about a container:
 ```shell
 $ docker inspect
 ```
 
-* Dirección IP de container:
+* Container IP address:
 ```shell
 $ docker  inspect --format '{{ .NetworkSettings.IPAddress }}' <nombre_container>
 ```
 
 ### `logs`
-* Mostrar logs sobre un container:
+* Show logs about a container:
 ```shell
 $ docker logs
 ```
 
 ### `stats`
 
-* Estadísticas del container (CPU,MEM,etc.):
+* Container statistics (CPU,MEM,etc.):
 ```shell
 $ docker stats
 ```
 
 ### Ports in Containers
-* Puertos publicos del container:                                        
+* Container public ports:
 ```shell
 $ docker port
 ```
-* Publicar puerto 80 del container en un puerto random del Host:
+* Publish container port 80 to a random Host port:
 ```shell
 $ docker run -p 80 nginx
 ```
-* Publicar puerto 80 del container en el puerto 8080 del Host:
+* Publish container port 80 to host port 8080:
 ```shell
 $ docker run -p 8080:80 nginx
 ```
-* Publicar todos los puerto expuestos del container en puertos random del Host:
+* Publish all exposed ports of the container to random ports of the Host:
 ```shell
 $ docker run -P nginx
 ```
-* Listar todos los mapeos de los puertos de un container:
+* List all the port mappings of a container:
 ```shell
 $ docker port <container_name>
 ```
 
 # Images
 
-* Ver listado de imagenes:
+* See list of images:
 ```shell
 $ docker images
 ```
 
-* Ver "todo el historial" de imágenes arrancadas:
+* View "all history" of ripped images:
 ```shell
 $ docker images -a
 ```
 
-* Borrar una imágen:
+* Delete an image:
 ```shell
 $ docker rmi <images_name>
 ```
 
-* Para conocer el historial y "layers" que tiene una imagen:
+* To know the history and "layers" that an image has:
 ```shell
 $ docker history <image_name>
 ```
 
-  ### Crear nuestras propias Images:
+  ### Creat our own Images:
 
-  Podemos crear nuestras propias imágenes de diferentes maneras:
+  We can create our own images in different ways:
 
   A) `docker commit`: build an image from a container.
 
-  Ejemplo:
+  Example:
   ```shell
    $ docker commit -m "Mensaje que queramos" -a "Nombre del que lo ha hecho" container-id NEW_NAME:TAG
    $ docker commit -m "MongoDB y Scrapy instalados" -a "Etxahun" 79869875807 etxahun/scrapy_mongodb:0.1
    ```
   B) `docker build`: create an image from a "Dockerfile" by executing the build steps given in the file.
 
-  Dentro de un Dockerfile las "instructions" que podemos utilizar son las siguientes:
+  Within a Dockerfile the "instructions" that we can use are the following:
 
    * **FROM**: the base image for building the new docker image; provide "FROM scratch" if it is a base image itself.
    * **MAINTAINER**: the author of the Dockerfile and the email.
@@ -294,7 +295,7 @@ $ docker history <image_name>
    * **EXPOSE**: exposes the specified port to the host machine.
 
 
-  Ejemplo:
+  Example:
   ```shell
   $ nano myimage/Dockerfile
 
@@ -318,31 +319,32 @@ $ docker history <image_name>
   $ docker run -it 777f9424d24d
   $ root@2dcd9d0caf6f:/#
   ```
-  Podemos ponerle un nombre o "tagear" la imagen en el momento que estemos haciendo el "build":
+  We can put a name or "tag" the image at the time we are doing the "build":
   ```shell
   $ docker build <dirname> -t "<imagename>:<tagname>"
   ```
-  Ejemplo:
+  Example:
   ```shell
   $ docker build myimage -t "myfirstimage:latest"
   ```
 ### Tag the image
 
-La notación que se suele utilizar para asociar una imagen local con un "repository" dentro de un "registry" es la siguiente: `username/repository:tag`. La parte "tag" es opcional, pero recomendable, ya que es la manera en que versionaremos en Docker las imágenes.
+The notation commonly used to associate a local image with a "repository" within a "registry" is as follows: `username/repository:tag`. The "tag" part is optional, but recommended, since it is the way in which we will version the images in Docker
 
-Para realizar el "tag" haremos lo siguiente:
+To assign the "tag":
 
 ```shell
 $ docker tag image username/repository:tag
 ```
 
-Por ejemplo:
+Example:
 
 ```shell
 docker tag friendlyhello john/get-started:part2
 ```
 
-Para comprobar la imagen que acabamos de "tagear":
+
+To check the image that we have just tagged:
 
 ```shell
 $ docker images_name
@@ -356,12 +358,12 @@ python                   2.7-slim            1c7128a655f6        5 days ago     
 
 ### Publish the image
 
-Para publicar la imagen haremos lo siguiente:
+To publish the image:
 ```shell
 $ docker push username/repository:tagear
 ```
 
-Una vez subido, podremos ver en la Web de [Docker Hub](https://hub.docker.com/ "Docker Hub").
+Once uploaded, we can see on the Web of [Docker Hub](https://hub.docker.com/ "Docker Hub").
 
 # Volumes
 
@@ -453,7 +455,7 @@ If you use Docker for development this way, your production Dockerfile would cop
 
 `tmpfs mounts` are best used for cases when you do not want the data to persist either on the host machine or within the container. This may be for security reasons or to protect the performance of the container when your application needs to write a large volume of non-persistent state data.
 
-### Ejemplo Práctico
+### Practical Example
 
 `Volumes` are the **preferred mechanism for persisting data** generated by and used by Docker containers. While `bind mounts` are dependent on the directory structure of the host machine, volumes are completely managed by Docker. Volumes have **several advantages** over bind mounts:
 
@@ -566,15 +568,16 @@ Unlike a `bind mount`, you can create and manage volumes outside the scope of an
       ],
     ```
 
-# Ciclo de vida de un contenedor (Create/Start/Stop/Kill/Remove)
+# Container life cycle (Create/Start/Stop/Kill/Remove)
 
-Hasta ahora vimos cómo ejecutar un contenedor tanto en *foreground* como en *background* (detached). Ahora veremos cómo manejar el ciclo completo de vida de un contenedor. Docker provee de comandos como `create` , `start`, `stop`, `kill` , y `rm`. En todos ellos podría pasarse el argumento "-h" para ver las opciones disponibles.
-Ejemplo:
+So far we've seen how to run a container in both *foreground* and *background* (detached). Now we will see how to handle the complete life cycle of a container. Docker provides commands like `create` , `start` , `stop` , `kill` , and `rm` . In all of them the "-h" argument could be passed to see the available options.
+
+Example:
 ```shell
 $ docker create -h
 ```
 
-Más arriba vimos cómo correr un contenedor en segundo plano (detached). Ahora veremos en el mismo ejemplo, pero con el comando `create`. La única diferencia es que ésta vez no especificaremos la opción "-d". Una vez preparado, necesitaremos lanzar el contenedor con `docker start`.
+Above we saw how to run a container in the background (detached). Now we will see in the same example, but with the `create` command. The only difference is that this time we will not specify the "-d" option. Once ready, we will need to launch the container with `docker start`.
 
 Ejemplo:
 ```shell
@@ -595,19 +598,19 @@ $ docker ps
 
 ### Detener Containers:
 
-Siguiendo el ejemplo, para **detener** el contenedor se puede ejecutar cualquiera de los siguientes comandos `kill` ó `stop`:
+Following the example, to **stop** the container, you can execute any of the following `kill` or `stop` commands:
 ```shell
-$ docker kill a842945e2414 (envía SIGKILL)
-$ docker stop a842945e2414 (envía SIGTERM).
+$ docker kill a842945e2414 (sends SIGKILL)
+$ docker stop a842945e2414 (sends SIGTERM).
 ```
 
-Asimismo, pueden reiniciarse (hacer un `docker stop a842945e2414` y luego un `docker start a842945e2414`):
+They can also be restarted (do a `docker stop a842945e2414` and then a `docker start a842945e2414`):
 
 ```shell
 $ docker restart a842945e2414
 ```
 
-o destruirse:
+o To remove:
 
 ```shell
 $ docker rm a842945e2414
@@ -615,27 +618,27 @@ $ docker rm a842945e2414
 
 # Dockerfiles
 
-* **Problema:**
+* **Problem:**
 
-  Ejecutar contenedores en modo interactivo (-ti), hacer algunos cambios y para luego hacer un "commit" de estos en una nueva imagen, funciona bien. Pero en la mayoría de los casos, tal vez quieras automatizar este proceso de creación de nuestra propia imagen y compartir estos pasos con otros.
+  Running containers in interactive mode (-ti), making some changes, and then committing them to a new image works fine. But in most cases, you may want to automate this process of creating your own image and share these steps with others.
 
-* **Solución:**
+* **Solution:**
 
-  Para automatizar el proceso de creación de imágenes Docker, crearemos los ficheros **Dockerfile**. Este archivo de texto está compuesto por:
-  * Una serie de instrucciones que describen cuál es la **imagen base** en la que está basado el nuevo contenedor.
-  * Los **pasos/instrucciones** que necesitan llevarse a cabo para instalar las dependencias de la aplicación.
-  * Archivos que necesitan estar presentes en la imagen.
-  * Los **puertos** serán expuestos por el contenedor.
-  * El/los **comando(s) a ejecutar** cuando se ejecuta el contenedor.
+  To automate the Docker image creation process, we will create the **Dockerfile**. This text file is composed of::
+  * A series of instructions describing what **base image** the new container is based on.
+  * The **steps/instructions** that need to be performed to install the application's dependencies.
+  * Files that need to be present in the image.
+  * The **ports** will be exposed by the container.
+  * The **command(s) to run** when the container runs.
 
-### Cómo Empezar
+### How to start
 
-En primer lugar crearemos un directorio vacio y entraremos a dicho directorio
+First we will create an empty directory and enter that directory
 ```shell
  $ mkdir pruebadockerfile
  $ cd pruebadockerfile/
  ```
-Una vez dentro crearemos un fichero llamado "dockerfile" y le copiaremos el siguiente código:
+Once inside we will create a file called "dockerfile" and we will copy the following code:
 
 ```shell
 # Use an official Python runtime as a parent image
@@ -659,11 +662,13 @@ ENV NAME World
 # Run app.py when the container launches
 CMD ["python", "app.py"]
 ```
-Dentro del "dockerfile" se hace referencia a un par de fichero que no hemos creado aun: **app.py** y **requirements.txt**.
+Within the "dockerfile" reference is made to a couple of files that we have not created yet:
 
-### La aplicación
+**app.py** y **requirements.txt**.
 
-Crearemos ambos ficheros dentro del mismo directorio donde se encuentra el fichero "dockerfile":
+### The Application
+
+We will create both files inside the same directory where the "dockerfile" file is located:
 
 `requirements.txt`
 ```shell
@@ -699,22 +704,22 @@ if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
 ```
 
-Como vemos, en el fichero "requirements.txt" se especifican los paquetes de python **Flask** y **Redis** que se van a instalar.
+As we can see, the "requirements.txt" file specifies the python packages **Flask** and **Redis** that are going to be installed.
 
-### Build del Dockerfile
+### Build the Dockerfile
 
-Ya estamos listos para hacer el "build" de la aplicación. Nos aseguraremos de estar en el mismo directorio donde están los fichero "dockerfile", "app.py" y "requirements.txt":
+We are now ready to make the "build" of the application. We will make sure we are in the same directory where the "dockerfile", "app.py" and "requirements.txt" files are:
 
 ```shell
 $ ls
 Dockerfile		app.py			requirements.txt
 ```
-Y a continuación realizamos el "build". Esto nos creará un "Docker image" que "tagearemos" con "-t" para que tenga un "friendly name":
+And then we perform the "build". This will create a "Docker image" that we will "tag" with "-t" so that it has a "friendly name":
 
 ```shell
 $ docker build -t friendlyhello .
 ```
-Para ver que se ha creado correctamente la imagen haremos lo siguiente:
+To see that the image has been created correctly we will do the following:
 ```shell
 $ docker images (o sino docker image ls)
 
@@ -723,28 +728,28 @@ friendlyhello         latest              326387cea398
 ```
 ### Run the app
 
-Arrancaremos la aplicación mapeando el puerto **4000** de nuestro host al puerto **80** del container mediante el parámetro "-p":
+We will start the application by mapping the port **4000** of our host to the port **80** of the container using the "-p" parameter:
 
 ```shell
 $ docker run -p 4000:80 friendlyhello
 ```
 
-Si todo ha ido bien deberíamos ver como se ha cargado un servidor Web Flask de Python sirviendo en: `http://0.0.0.0:80`. Dicho mensaje lo indica el servidor Web que está corriendo dentro del container, sin embargo como hemos mapeado el puerto **4000** con el puerto **80**, abriremos el navegador y accederemos mediante: `http://localhost:4000`.
+If all went well we should see a Python Flask Web server loading at: `http://0.0.0.0:80`. Said message is indicated by the Web server that is running inside the container, however since we have mapped the port **4000** with the port **80**, we will open the browser and access through: `http://localhost:4000 `.
 
-Si queremos que el container funcione en *background* (detached mode) haremos lo siguiente:
+If we want the container to work in *background* (detached mode) we will do the following:
 
 ```shell
 $ docker run -d -p 4000:80 friendlyhello
 ```
-Hemos utilizado la opción "-d" para arrancarlo en "detached mode".
+We have used the "-d" option to start it in "detached mode".
 
 # Docker Compose: Linkar containers
 
-Cuando estamos diseñando una "aplicación distribuida", a cada una de las piezas se le conoce como "service". Por ejemplo, si pensamos en una aplicación de "Video Sharing site", tendremos que tener por un lado un servicio que nos permita almacenar en una base de datos todo el contenido multimedia, por otra parte tendremos un servicio para realizar el "transcoding" en background cada vez que un usuario suba un vídeo, tambien tendremos un servicio para la parte front-end, etc.
+When we are designing a "distributed application", each of the pieces is known as a "service". For example, if we think of a "Video Sharing site" application, on the one hand we will have to have a service that allows us to store all the multimedia content in a database, on the other hand we will have a service to perform the "transcoding" in background each time a user uploads a video, we will also have a service for the front-end part, etc.
 
-Llamamos "services" a los "containers" que pongamos en producción. Un servicio se compone de una sola imagen, con todo lo necesario para que ésta proporcione la funciones para lo que ha sido creada. En Docker, la manera en que definiremos dichas "images" es con "Docker Compose", escribiendo lo que se conocen como ficheros **docker-compose.yml**.
+We call the "containers" that we put into production "services". A service is made up of a single image, with everything necessary for it to provide the functions for which it was created. In Docker, the way we will define these "images" is with "Docker Compose", by writing what are known as **docker-compose.yml** files.
 
-Para trabajar con Compose seguiremos los siguietes pasos:
+To work with Compose we will follow the following steps:
 
 1. Define your app’s environment with a `Dockerfile` so it can be reproduced anywhere.
 
@@ -759,14 +764,14 @@ Compose tiene comandos para poder gestionar el ciclo de vida completo de nuestra
 * Stream the log output of running services
 * Run a one-off command on a service
 
-Referencia:
+Reference:
   * [Compose file version 3 reference](https://docs.docker.com/compose/compose-file/ "Compose file version 3 reference")
 
-### Ejemplo Práctico: Wordpress + MySQL
+### Practical Example: Wordpress + MySQL
 
-Cuando queramos "linkar" dos o más contenedores tendremos que establecer su relación en un fichero YAML. A continuación se muestra un ejemplo de un fichero que "linka" un container "Web" (Wordpress) y uno de base de datos "MySQL":
+When we want to "link" two or more containers we will have to establish their relationship in a YAML file. Below is an example of a file that "links" a "Web" container (Wordpress) and a "MySQL" database container:
 
-* Contenido del fichero **docker-compose.yml**:
+* File content **docker-compose.yml**:
 
   ```YAML
   version: '3'
@@ -798,22 +803,22 @@ Cuando queramos "linkar" dos o más contenedores tendremos que establecer su rel
       db_data:
 
   ```
-  Y para ejecutarlo, estando en el mismo directorio donde está el fichero **docker-compose.yml**, haremos lo siguiente:
+  And to execute it, being in the same directory where the **docker-compose.yml** file is, we will do the following:
 
   ```shell
   $ docker-compose up
   ```
-  Y para comprobar que todo ha ido bien, abriremos la url http://localhost:8000 para acceder a la página de Wordpress.
+  And to check that everything has gone well, we will open the url http://localhost:8000 to access the Wordpress page.
 
-  Para parar tenemos dos opciones:
+  To stop we have two options:
 
-  * `docker-compose down` borra los contenedores, la red por defecto pero mantiene la base de datos de Wordpress.
+  * `docker-compose down` deletes the containers, the default network but keeps the Wordpress database.
 
-  * `docker-compose down --volumes` borra los contenedores, la red por defecto y las bases de datos.
+  * `docker-compose down --volumes` deletes the containers, the default network and the databases.
 
 # Docker Stack
 
-**Referencias:**
+**Reference:**
 * [Docker Stacks and why we need them](https://blog.nimbleci.com/2016/09/14/docker-stacks-and-why-we-need-them/ "Docker Stacks and why we need them")
 
 Conceptually, `docker-compose` and `docker stack` files serve the same purpose - **deployment and configuration of your containers on docker engines**.
@@ -889,9 +894,9 @@ When you run a container, you can use the `--network` flag to specify which netw
 
 ### Network Containers
 
-Docker permite realizar "containers networking" gracias al uso de sus **network drivers**. Por defecto, Docker proporciona dos **drivers**: `bridge` y `overlay`.
+Docker allows "container networking" thanks to the use of its **network drivers**. By default, Docker provides two **drivers**: `bridge` and `overlay`.
 
-Toda instalacion de **Docker Engine** automáticamente incluye las siguientes tres redes:
+Every installation of **Docker Engine** automatically includes the following three networks:
 
 ```shell
 $ docker network ls
@@ -901,7 +906,7 @@ NETWORK ID          NAME                DRIVER
 c288470c46f6        host                host
 7b369448dccb        bridge              bridge
 ```
-* **Bridge:** Es una red especial. A menos que especifiquemos lo contrario, Docker siempre arrancará los containers en ésta red. Podemos probar a hacer lo siguiente:
+* **Bridge:** It is a special network. Unless we specify otherwise, Docker will always start containers on this network. We can try to do the following:
 ```shell
 $ docker run -itd --name=networktest ubuntu
 
@@ -956,30 +961,30 @@ $ docker network inspect bridge
 ]
 ```
 
-Para desconectar un container de una red tendremos que indicar la red en la que está conectada así como el nombre del container:
+To disconnect a container from a network we will have to indicate the network in which it is connected as well as the name of the container:
 
 ```shell
 $ docker network disconnect bridge networktest
 ```
 
-**Importante:** Networks are natural ways to isolate containers from other containers or other networks.
+**Important:** Networks are natural ways to isolate containers from other containers or other networks.
 
-#### 1. Crear nuestro propio "Bridge Network"
+#### 1. Creat own "Bridge Network"
 
-Como ya hemos comentado, **Docker Engine** soporta dos tipos de redes: *bridge* y *overlay*:
+As we have already mentioned, **Docker Engine** supports two types of networks: *bridge* and *overlay*:
 
-* **Bridge:** se limita a un "single host" donde esté funcionando "Docker Engine".
-* **Overlay:** puede incluir múltimples hosts con "Docker Engine" instalado.
+* **Bridge:** It is limited to a "single host" where "Docker Engine" is running
+* **Overlay:** It can include multiple hosts with "Docker Engine" installed.
 
-A continuación crearemos un "bridge network":
+Next we will create a "bridge network":
 
 ```shell
 $ docker network create -d bridge my_bridge
 ```
 
-El flag "-d" indica a Docker que tiene que cargar el driver de red "bridge". Es opcional ya que Docker por defecto carga "bridge".
+The "-d" flag tells Docker to load the "bridge" network driver. It is optional since Docker by default loads "bridge".
 
-Si volvemos a listar los drivers de red, veremos el que acabamos de crear:
+If we list the network drivers again, we will see the one we just created:
 
 ```shell
 $ docker network ls
@@ -991,7 +996,7 @@ NETWORK ID          NAME                DRIVER
 c288470c46f6        host                host
 ```
 
-Y si hacemos un "inspect" de la red veremos que no tiene ninguna información:
+And if we do an "inspect" of the network we will see that it does not have any information:
 
 ```shell
 $ docker network inspect my_bridge
@@ -1020,15 +1025,15 @@ $ docker network inspect my_bridge
 
 #### 2. Add Containers to a Network
 
-Cuando construyamos aplicaciones Web que deban funcionar de manera conjunta, por seguridad, crearemos una red. Las redes, por definicion, proporcionan una aislamiento completo a los containers. Cuando vayamos a arrancar un container podremos agregarlo a una red.
+When we build Web applications that must work together, for security, we will create a network. Networks, by definition, provide complete isolation to containers. When we go to start a container we can add it to a network.
 
-En el siguiente ejemplo arrancaremos un container de base de datos PostgreSQL pasándole el flag "--net=my_bridge":
+In the following example we will start a PostgreSQL database container by passing it the "--net=my_bridge" flag:
 
 ```shell
 $ docker run -d --net=my_bridge --name db training/postgres
 ```
 
-Si ahora realizamos un "inspect" de la red "my_bridge" veremos que tiene un container asociado. También podemos inspeccionar el container para ver a qué red está conectado:
+If we now perform an "inspect" of the "my_bridge" network we will see that it has an associated container. We can also inspect the container to see what network it is connected to:
 
 ```shell
 $ docker inspect --format='{{json .NetworkSettings.Networks}}'  db
@@ -1037,7 +1042,7 @@ $ docker inspect --format='{{json .NetworkSettings.Networks}}'  db
 "EndpointID":"508b170d56b2ac9e4ef86694b0a76a22dd3df1983404f7321da5649645bf7043","Gateway":"10.0.0.1","IPAddress":"10.0.0.254","IPPrefixLen":24,"IPv6Gateway":"","GlobalIPv6Address":"","GlobalIPv6PrefixLen":0,"MacAddress":"02:42:ac:11:00:02"}}
 ```
 
-Si ahora arrancamos la imagen Web veremos que la red está de la siguiente manera:
+If we now start the Web image we will see that the network is as follows:
 
 ```shell
 $ docker run -d --name web training/webapp python app.py
@@ -1047,45 +1052,45 @@ $ docker run -d --name web training/webapp python app.py
   <img src="images/bridge2.png">
 </p>
 
-# Limpieza
+# Cleaning
 ### Containers:
 * Borrar container:
 ```shell
 $ docker rm <container_ID>
 ```
 
-* Borrar container y sus volumenes asociados:
+* Delete container and its associated volumes:
 ```shell
 $ docker rm -v <container_ID>
 ```
 
-* Borrar TODOS los containers:
+* Delete ALL containers:
 ```shell
 $ docker rm $(docker ps -a -q)
 ```
 
 ### Images:
-* Borrar imágenes:
+* Delete images:
 ```shell
 $ docker rmi <container_ID>
 ```
 
-* Borrar TODAS las imáganes:
+* Delete ALL images:
 ```shell
 $ docker rmi $(docker images -q)
 ```
-* Listar imágenes <none> "colgadas":
+* List dangling <none> images:
 ```shell
 $ docker images -f "dangling=true"
 ```
 
-* Borrar imágenes <none> "colgadas":
+* Delete dangling <none> images:
 ```shell
 $ docker rmi $(docker images -f "dangling=true" -q)
 ```
 
 ### Volumes:
-* Borrar TODOS los "volume" que no se estén utilizando:
+* Delete all "volumes" that are not being used:
 ```shell
 $ docker volume rm $(docker volumels -q)
 ```
@@ -1093,7 +1098,7 @@ $ docker volume rm $(docker volumels -q)
 # CheatSheets
 ### Docker General Commands
 
-A continuación se muestra un listado con los *comandos básicos* de Docker:
+Below is a list of the *basic* commands of Docker:
 
 ```shell
 docker build -t friendlyname .                   # Create image using this directory's Dockerfile
